@@ -5,17 +5,18 @@ import { Chat } from "@/lib/models/chat";
 import { Module } from "@/lib/models/module";
 
 type Params = {
-  params: { projectId: string };
+  params: Promise<{ projectId: string }>;
 };
 
 export async function GET(_: Request, { params }: Params) {
-  if (!params?.projectId) {
+  const { projectId } = await params;
+  if (!projectId) {
     return NextResponse.json({ error: "Project id is required." }, { status: 400 });
   }
 
   await connectToDatabase();
 
-  const modules = await Module.find({ projectId: params.projectId }).sort({ createdAt: 1 }).lean();
+  const modules = await Module.find({ projectId }).sort({ createdAt: 1 }).lean();
   const moduleIds = modules.map((moduleItem) => moduleItem._id);
   const chats = moduleIds.length
     ? await Chat.find({ moduleId: { $in: moduleIds } }).sort({ createdAt: 1 }).lean()
@@ -41,11 +42,12 @@ export async function GET(_: Request, { params }: Params) {
 }
 
 export async function POST(request: Request, { params }: Params) {
+  const { projectId: paramsProjectId } = await params;
   const body = await request.json();
   const name = typeof body?.name === "string" ? body.name.trim() : "";
   const projectId =
-    typeof params?.projectId === "string"
-      ? params.projectId
+    typeof paramsProjectId === "string"
+      ? paramsProjectId
       : typeof body?.projectId === "string"
         ? body.projectId.trim()
         : "";
