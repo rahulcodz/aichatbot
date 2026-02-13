@@ -1,6 +1,13 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 
 import { DEFAULT_MODE, DEFAULT_THEME, type ThemeMode, type ThemeName, THEMES } from "@/lib/theme";
 
@@ -15,6 +22,32 @@ type ThemeContextValue = {
 };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
+const themeNameSet = new Set(THEMES.map((theme) => theme.name));
+const modeSet = new Set<ThemeMode>(["light", "dark"]);
+
+function getStoredTheme(): ThemeName {
+  if (typeof window === "undefined") {
+    return DEFAULT_THEME;
+  }
+  const value = window.localStorage.getItem("theme");
+  if (value && themeNameSet.has(value as ThemeName)) {
+    return value as ThemeName;
+  }
+  return DEFAULT_THEME;
+}
+
+function getStoredMode(): ThemeMode {
+  if (typeof window === "undefined") {
+    return DEFAULT_MODE;
+  }
+  const value = window.localStorage.getItem("mode");
+  if (value && modeSet.has(value as ThemeMode)) {
+    return value as ThemeMode;
+  }
+  return DEFAULT_MODE;
+}
+
+const subscribe = () => () => {};
 
 function applyTheme(theme: ThemeName, mode: ThemeMode) {
   if (typeof document === "undefined") return;
@@ -25,18 +58,13 @@ function applyTheme(theme: ThemeName, mode: ThemeMode) {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeName>(DEFAULT_THEME);
-  const [mode, setModeState] = useState<ThemeMode>(DEFAULT_MODE);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    const storedTheme = window.localStorage.getItem("theme") as ThemeName | null;
-    const storedMode = window.localStorage.getItem("mode") as ThemeMode | null;
-
-    setThemeState(storedTheme ?? DEFAULT_THEME);
-    setModeState(storedMode ?? DEFAULT_MODE);
-    setMounted(true);
-  }, []);
+  const [theme, setThemeState] = useState<ThemeName>(() => getStoredTheme());
+  const [mode, setModeState] = useState<ThemeMode>(() => getStoredMode());
+  const mounted = useSyncExternalStore(
+    subscribe,
+    () => true,
+    () => false
+  );
 
   useEffect(() => {
     if (!mounted) return;

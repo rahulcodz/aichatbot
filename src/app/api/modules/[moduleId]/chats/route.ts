@@ -4,25 +4,27 @@ import { connectToDatabase } from "@/lib/db";
 import { Chat } from "@/lib/models/chat";
 
 type Params = {
-  params: { moduleId: string };
+  params: Promise<{ moduleId: string }>;
 };
 
 export async function GET(_: Request, { params }: Params) {
-  if (!params?.moduleId) {
+  const { moduleId } = await params;
+  if (!moduleId) {
     return NextResponse.json({ error: "Module id is required." }, { status: 400 });
   }
 
   await connectToDatabase();
-  const chats = await Chat.find({ moduleId: params.moduleId }).sort({ createdAt: 1 }).lean();
+  const chats = await Chat.find({ moduleId }).sort({ createdAt: 1 }).lean();
   return NextResponse.json({ chats });
 }
 
 export async function POST(request: Request, { params }: Params) {
+  const { moduleId: paramsModuleId } = await params;
   const body = await request.json();
   const title = typeof body?.title === "string" ? body.title.trim() : "";
   const moduleId =
-    typeof params?.moduleId === "string"
-      ? params.moduleId
+    typeof paramsModuleId === "string"
+      ? paramsModuleId
       : typeof body?.moduleId === "string"
         ? body.moduleId.trim()
         : "";

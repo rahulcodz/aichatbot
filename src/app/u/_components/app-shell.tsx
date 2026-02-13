@@ -7,7 +7,6 @@ import {
   Boxes,
   ChevronDown,
   ChevronsLeft,
-  ChevronsRight,
   Folder,
   LayoutGrid,
   Menu,
@@ -60,22 +59,22 @@ const projectIconMap = new Map(projectIconOptions.map((option) => [option.name, 
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
-  const [collapsed, setCollapsed] = React.useState(false);
+  const [collapsed] = React.useState(false);
   const [projects, setProjects] = React.useState<ProjectRecord[]>([]);
-  const [loading, setLoading] = React.useState(true);
+  const [, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
   const [activeProjectId, setActiveProjectId] = React.useState<string | null>(null);
   const [activeModuleId, setActiveModuleId] = React.useState<string | null>(null);
   const [activeChatId, setActiveChatId] = React.useState<string | null>(null);
-  const [openProjectId, setOpenProjectId] = React.useState<string | null>(null);
+  const [, setOpenProjectId] = React.useState<string | null>(null);
   const [openModuleId, setOpenModuleId] = React.useState<string | null>(null);
 
   const [projectName, setProjectName] = React.useState("");
   const [projectIcon, setProjectIcon] = React.useState(projectIconOptions[0]?.name ?? "folder");
   const [moduleName, setModuleName] = React.useState("");
   const [chatTitle, setChatTitle] = React.useState("");
-  const [busyKey, setBusyKey] = React.useState<string | null>(null);
+  const [, setBusyKey] = React.useState<string | null>(null);
   const [projectEditName, setProjectEditName] = React.useState("");
   const [moduleEditName, setModuleEditName] = React.useState("");
   const [chatEditTitle, setChatEditTitle] = React.useState("");
@@ -130,17 +129,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     refreshProjects();
   }, [refreshProjects]);
-
-  React.useEffect(() => {
-    const stored = window.localStorage.getItem("u.sidebar.collapsed");
-    if (stored === "true") {
-      setCollapsed(true);
-    }
-  }, []);
-
-  React.useEffect(() => {
-    window.localStorage.setItem("u.sidebar.collapsed", collapsed ? "true" : "false");
-  }, [collapsed]);
 
   const activeProject = React.useMemo(
     () => projects.find((project) => project._id === activeProjectId) ?? null,
@@ -459,11 +447,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       activeProjectId,
       activeModuleId,
       activeChatId,
+      refreshProjects,
       setActiveProjectId,
       setActiveModuleId,
       setActiveChatId,
     }),
-    [projects, activeProjectId, activeModuleId, activeChatId]
+    [projects, activeProjectId, activeModuleId, activeChatId, refreshProjects]
   );
 
   const modalProject = React.useMemo(
