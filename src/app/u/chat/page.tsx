@@ -11,7 +11,10 @@ import { useWorkspace } from "@/app/u/_components/workspace-context";
 import { cn } from "@/lib/utils";
 
 export default function ChatPage() {
-  const { projects, activeProjectId, activeModuleId, activeChatId } = useWorkspace();
+  const { projects, activeProjectId, activeModuleId, activeChatId, refreshProjects } = useWorkspace();
+  const [draftMessage, setDraftMessage] = React.useState("");
+  const [sending, setSending] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
   const activeProject = React.useMemo(
     () => projects.find((project) => project._id === activeProjectId) ?? null,
@@ -27,6 +30,52 @@ export default function ChatPage() {
   );
 
   const messages = activeChat?.messages ?? [];
+
+  React.useEffect(() => {
+    setError(null);
+    setDraftMessage("");
+  }, [activeChatId]);
+
+  const handleSend = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const content = draftMessage.trim();
+    if (!activeChatId || !content || sending) {
+      return;
+    }
+
+    setSending(true);
+    setError(null);
+    setDraftMessage("");
+
+    try {
+      const response = await fetch(`/api/chats/${activeChatId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: {
+            role: "user",
+            content,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send message.");
+      }
+
+      await refreshProjects({
+        projectId: activeProjectId ?? undefined,
+        moduleId: activeModuleId ?? undefined,
+        chatId: activeChatId,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to send message.";
+      setError(message);
+      setDraftMessage(content);
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6">
@@ -55,6 +104,7 @@ export default function ChatPage() {
 
       {activeChat && (
         <>
+          {error && <p className="text-sm text-destructive">{error}</p>}
           <div className="flex flex-col gap-4">
             {messages.length === 0 && (
               <div className="rounded-2xl border bg-card p-6 text-sm text-muted-foreground shadow-sm">
@@ -83,7 +133,7 @@ export default function ChatPage() {
 
           <Separator />
 
-          <div className="rounded-2xl border bg-card p-3 shadow-sm">
+          <form className="rounded-2xl border bg-card p-3 shadow-sm" onSubmit={handleSend}>
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="icon" aria-label="Attach file">
                 <Paperclip className="h-4 w-4" />
@@ -91,12 +141,20 @@ export default function ChatPage() {
               <Input
                 className="border-0 focus-visible:ring-0"
                 placeholder="Ask about project context, tasks, or updates..."
+                value={draftMessage}
+                onChange={(event) => setDraftMessage(event.target.value)}
+                disabled={sending}
               />
-              <Button size="icon" aria-label="Send" disabled>
+              <Button
+                size="icon"
+                aria-label="Send"
+                type="submit"
+                disabled={!activeChatId || !draftMessage.trim() || sending}
+              >
                 <Send className="h-4 w-4" />
               </Button>
             </div>
-          </div>
+          </form>
         </>
       )}
     </div>

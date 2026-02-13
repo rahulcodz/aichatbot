@@ -26,6 +26,11 @@ export type WorkspaceState = {
   activeProjectId: string | null;
   activeModuleId: string | null;
   activeChatId: string | null;
+  refreshProjects: (selection?: {
+    projectId?: string;
+    moduleId?: string;
+    chatId?: string;
+  }) => Promise<void>;
   setActiveProjectId: (projectId: string | null) => void;
   setActiveModuleId: (moduleId: string | null) => void;
   setActiveChatId: (chatId: string | null) => void;

@@ -459,11 +459,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       activeProjectId,
       activeModuleId,
       activeChatId,
+      refreshProjects,
       setActiveProjectId,
       setActiveModuleId,
       setActiveChatId,
     }),
-    [projects, activeProjectId, activeModuleId, activeChatId]
+    [projects, activeProjectId, activeModuleId, activeChatId, refreshProjects]
   );
 
   const modalProject = React.useMemo(

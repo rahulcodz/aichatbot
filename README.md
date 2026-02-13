@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# InsightFlow (MongoDB-backed)
 
-## Getting Started
+InsightFlow is a Next.js workspace/chat application with persistence in **MongoDB** (via Mongoose).
 
-First, run the development server:
+## Prerequisites
+
+- Node.js 20+
+- A MongoDB instance (local or cloud)
+
+## Environment variables
+
+Create a `.env.local` file in the project root:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+MONGODB_URI=mongodb://127.0.0.1:27017/insightflow
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`MONGODB_URI` is required. The app will fail at startup if it is missing.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Run locally
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
+npm run dev
+```
 
-## Learn More
+Open `http://localhost:3000`.
 
-To learn more about Next.js, take a look at the following resources:
+## Data model
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Mongo collections are organized as:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `projects`
+- `modules` (linked to project by `projectId`)
+- `chats` (linked to module by `moduleId`, includes embedded `messages`)
 
-## Deploy on Vercel
+## API overview
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `GET/POST /api/projects`
+- `PATCH/DELETE /api/projects/:projectId`
+- `GET/POST /api/projects/:projectId/modules`
+- `PATCH/DELETE /api/modules/:moduleId`
+- `GET/POST /api/modules/:moduleId/chats`
+- `GET/PATCH/POST/DELETE /api/chats/:chatId`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`POST /api/chats/:chatId` appends a message to a chat and persists it in MongoDB.
